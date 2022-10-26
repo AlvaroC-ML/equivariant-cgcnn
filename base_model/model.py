@@ -13,18 +13,23 @@ class base_model(Model):
         rbf_dim=10
     ):
         super().__init__()
-        self.pool=GlobalAvgPool
+
+        # For node prep
         self.element_embedding=Embedding(num_elements, embedding, mask_zero=True)
         self.element_mean=Embedding(num_elements, 1, mask_zero=True)
         self.embedding=embedding
+        self.rbf=RBFExpansion(rbf_dim)
+        self.dense_e=Dense(embedding)
 
+        # For message passing
         self.gnn=[
             base(embedding)
             for _ in range(message_passing)
         ]
-        self.rbf=RBFExpansion(rbf_dim)
-        self.dense_e=Dense(embedding)
+
+        # For pooling
         self.dense_n=Dense(1)
+        self.pool=GlobalAvgPool
 
     def call(self, inputs):
         x, a, e, i = inputs

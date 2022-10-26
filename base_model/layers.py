@@ -7,14 +7,18 @@ class base(MessagePassing):
     def __init__(self, embedding=256):
         super().__init__()
         self.embedding=embedding
+
+        # For edge processing
         self.dense_e1=Dense(embedding)
         self.dense_e2=Dense(embedding)
+
+        # For node processing
         self.dense_n1=Dense(embedding)
         self.dense_n2=Dense(embedding)
         self.dense_n3=Dense(embedding)
 
     # x.shape=(n_nodes, n_ef)
-    # a.shape=(n_nodes, n_nodes)
+    # a.shape=(n_nodes, n_nodes) (but is sparse)
     # e.shape=(edges, n_ef)
     def call(self, inputs):
         x, a, e = inputs
@@ -33,7 +37,7 @@ class base(MessagePassing):
         return self.dense_n2(self.dense_n3(embeddings)) # + original_x
 
 class RBFExpansion(Layer):
-    def __init__(self, new_dimensions):
+    def __init__(self, new_dimensions = 10):
         super().__init__()
         self.dim = new_dimensions
         self.eta = self.add_weight(
@@ -50,10 +54,6 @@ class RBFExpansion(Layer):
                     trainable = True
                 )
             )
-    
-    def build(self, input_shape):
-        self.batch_size = input_shape[0]
-        self.num_edges = input_shape[1]
     
     # Input is (batch_size, num_edges), output is (batch_size, num_edges, dim)
     def call(self, inputs): # how can we parametrize this?
