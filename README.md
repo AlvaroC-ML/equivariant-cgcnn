@@ -22,4 +22,4 @@ As it turns out, for every crystal $C$, there exists a rank 2 tensor $T$ such th
 
 $$M(R(C)) = R(M(C)).$$
 
-Plans might change, but we plan to implement the [PAINN model](https://arxiv.org/pdf/2102.03150.pdf), originally written in PyTorch, in Tensorflow. For a baseline model, we will use a standard Crystal Graph Convolutional Neural Network with edge updates as described in [this paper](https://www.sciencedirect.com/science/article/pii/S2666389921002233).
+Plans might change, but to predict $T$ we plan to implement the [PAINN model](https://arxiv.org/pdf/2102.03150.pdf), originally written in PyTorch, in Tensorflow. For a baseline model, we will use a standard Crystal Graph Convolutional Neural Network with edge updates as described in [this paper](https://www.sciencedirect.com/science/article/pii/S2666389921002233).
