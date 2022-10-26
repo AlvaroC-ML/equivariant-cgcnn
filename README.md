@@ -18,7 +18,7 @@ $$\kappa_L(R(C), R(u))=\kappa_L(C, u).$$
 
 ## Optimizing our ML model
 
-As it turns out, for every crystal $C$, there exists a rank 2 tensor $T$ such that $\kappa_L(C, u)=uTu^T$, where $u^T$ is the transpose of $u$. Thus, to predict $\kappa_L$ for every crystal $C$ and direction $u$, it suffices to predict $T$ for every crystal $C$. Let $M$ be our model, so we want $M(C)=T$. We can mathematically prove that for $M$ to be exact, we need it to be **rotationally equivariant**. That is, we need
+As it turns out, for every crystal $C$, there exists a rank 2 tensor $T$ such that $\kappa_L(C, u)=u^TTu$, where $u^T$ is the transpose of $u$. Thus, to predict $\kappa_L$ for every crystal $C$ and direction $u$, it suffices to predict $T$ for every crystal $C$. Let $M$ be our model, so we want $M(C)=T$. We can mathematically prove that for $M$ to be exact, we need it to be **rotationally equivariant**. That is, we need
 
 $$M(R(C)) = R(M(C)).$$
 
