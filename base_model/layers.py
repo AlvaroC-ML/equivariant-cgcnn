@@ -55,8 +55,7 @@ class RBFExpansion(Layer):
                 )
             )
     
-    # Input is (batch_size, num_edges), output is (batch_size, num_edges, dim)
-    def call(self, inputs): # how can we parametrize this?
+    def call(self, inputs): # how can we vectorize this?
         inputs = tf.expand_dims(inputs, axis = -1) # Expand dimension
         inputs = tf.concat([inputs - self.c[i] for i in range(self.dim)], axis = -1)
         
