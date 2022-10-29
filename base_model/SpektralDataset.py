@@ -1,5 +1,5 @@
 # This file creates the dataset that Spektral can then use for Spektral layers.
-# It was written by Dr. Peter St. John (https://github.com/pstjohn) and (slightly) edited by myself to fit the base model.
+# This file was written by Dr. Peter St. John (https://github.com/pstjohn) and (slightly) edited by myself to fit the base model.
 
 import json
 import numpy as np
