@@ -1,3 +1,5 @@
+# This file creates a Spektral layer that does message passing in a crystal graph.
+
 import tensorflow as tf 
 from tensorflow.keras.layers import Dense, Layer, Concatenate
 
@@ -14,20 +16,12 @@ class base(MessagePassing):
         self.dense_n3=Dense(embedding)
         self.concat=Concatenate(axis=-2)
 
-    # x.shape=(n_nodes, n_ef)
-    # a.shape=(n_nodes, n_nodes)
-    # e.shape=(edges, n_ef)
+    # To do some vertex and edge preprocessing, we need to redefine propagate. We can't do this in
+    # the call function because at that point we have not defined self.index_targets or self.index_sources.
     def propagate(self, x, a, e=None, **kwargs):
         self.n_nodes = tf.shape(x)[-2]
         self.index_targets = a.indices[:, 1]  # Nodes receiving the message
         self.index_sources = a.indices[:, 0]  # Nodes sending the message (ie neighbors)
-
-        print("Okay here I am.")
-        print(x.shape)
-        print(a.values.shape)
-        print(e.shape)
-        print(self.get_sources(x).shape)
-        print(self.get_targets(x).shape)
 
         concatenate = self.concat(
             [self.get_sources(x), self.get_targets(x), e]
