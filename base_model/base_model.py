@@ -1,3 +1,6 @@
+# This file creates a model as described in the paper:
+# https://www.sciencedirect.com/science/article/pii/S2666389921002233
+
 from tensorflow.keras import Model 
 from tensorflow.keras.layers import Embedding, Dense
 from tensorflow import squeeze
