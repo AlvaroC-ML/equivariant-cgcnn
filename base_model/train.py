@@ -1,3 +1,6 @@
+# This file trains the GNN. It roughly follows the format proposed in:
+# https://github.com/danielegrattarola/spektral/blob/master/examples/graph_prediction/qm9_ecc.py
+
 from base_model import base_model
 
 import numpy as np
