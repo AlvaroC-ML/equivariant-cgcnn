@@ -1,3 +1,6 @@
+# This file creates the dataset that Spektral can then use for Spektral layers.
+# It was written by Dr. Peter St. John (https://github.com/pstjohn) and (slightly) edited by myself to fit the base model.
+
 import json
 import numpy as np
 import pandas as pd
@@ -13,7 +16,10 @@ from preprocessor import GVPPreprocessor
 # Saving graphs
 ############
 
-input_path = "/projects/rlmolecule/pstjohn/alvaro_inputs.json"
+# The data is saved in a JSON file that contains the crystal structures as values, and the corresponding ICSD ID
+# as the key.
+
+input_path = "/path/to/json/file.json"
 
 structures = {}
 with open(input_path) as f:
@@ -29,6 +35,8 @@ structure_inputs = {
 # Saving labels
 ############
 
+# This (publicly available) dataset contains the target values.
+# We will only use the max possible value of kappa_L for the base model.
 kappaL = pd.read_csv(
     "https://github.com/prashungorai/anisotropy-atlas/raw/master/cm2020-kappaL/kappaL-tensors-layered.csv"
 )
@@ -36,6 +44,9 @@ kappaL = pd.read_csv(
 valid = kappaL.sample(50, random_state=1)
 train = kappaL[~kappaL.index.isin(valid)].sample(frac=1.0, random_state=1)
 
+############
+# Creating dataset
+############
 
 class KappaLDataset(Dataset):
     def __init__(self, data):
