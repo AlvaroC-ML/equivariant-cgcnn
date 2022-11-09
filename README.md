@@ -12,8 +12,7 @@ Modeling a crystal as a graph has advantages. The field of graph neural networks
 
 The objective is to calculate the anisotropic thermal conductivity of a crystal. If you do not know enough chemistry to understand what that means, don't worry. Me neither. So let's interpret the concept as a black box through mathematics.
 
-Thermal conductivity in some crystals varies according to the direction in which the crystal is moving. Let $\kappa_L(C, u)$ be a measure of the thermal conductivity of the crystal $C$ when $C$ moves in direction $u$ where $u$ is a unitary vector. For any rotation or translation $R$, we have
-
+Thermal conductivity in some crystals varies according to the direction in which the crystal is moving. Let $\kappa_L(C, u)$ be a measure of the thermal conductivity of the crystal $C$ when $C$ moves in direction $u$ where $u$ is a unitary vector. $\kappa_L$ has three properties. For any rotation or translation $R$, 
 $$\kappa_L(R(C), R(u))=\kappa_L(C, u),$$
 $$\kappa_L(R(C), u)=\kappa_L(C, R^{-1}(u)),$$
 and
