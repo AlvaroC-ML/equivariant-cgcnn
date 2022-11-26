@@ -1,3 +1,7 @@
+# This file creates the preprocessor that transforms an ICSD file into a Networkx graph to be taken as input by 
+# SpektralDataset.py. It uses the NFP (Neuralfingerprint) library, it was written by Dr. Peter St. John
+# (https://github.com/pstjohn), and it was slightly edited by me to fit the GVP model.
+
 from typing import Dict
 
 import networkx as nx
