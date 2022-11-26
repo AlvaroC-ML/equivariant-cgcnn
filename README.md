@@ -29,6 +29,6 @@ But what does it mean to rotate a rank 2 tensor? We can mathematically prove tha
 
 $$M(R(C))=RTR'$$
 
-where $R$ is the corresponding rotation matrix. We designed a GNN architecture that, if $M(C) = T$, then $M(R(C)) = RTR'$, always. This was achieved by using [Geometric Vector Perceptrons](https://openreview.net/pdf?id=1YLJDvSx6J4). For a baseline model, we will use a slight variation of a standard Crystal Graph Convolutional Neural Network as described in [this paper](https://www.sciencedirect.com/science/article/pii/S2666389921002233) to calculate the maximum possible values of $\kappa_L$.
+where $R$ is the corresponding rotation matrix. We designed a GNN architecture such that, if $M(C) = T$, then $M(R(C)) = RTR'$, always. This was achieved by using [Geometric Vector Perceptrons](https://openreview.net/pdf?id=1YLJDvSx6J4). For a baseline model, we will use a slight variation of a standard Crystal Graph Convolutional Neural Network as described in [this paper](https://www.sciencedirect.com/science/article/pii/S2666389921002233) to calculate the maximum possible values of $\kappa_L$.
 
 The dataset containing values of $T$ is publicly available [here](https://github.com/prashungorai/anisotropy-atlas/blob/master/cm2020-kappaL/kappaL-tensors-layered.csv). 
