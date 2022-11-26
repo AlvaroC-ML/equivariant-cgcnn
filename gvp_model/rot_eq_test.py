@@ -42,8 +42,11 @@ R3 = tf.constant(
 R = np.matmul(np.matmul(R1, R2), R3)
 
 ############
-#
+# Verifying values remain unchanged
 ############
+
+# The model gives two ouptuts: u_s, and u_v. u_s is rotationally invariant. u_v is rotationally equivariant. 
+# That is, we want to verify that if M(C) = u_s, u_v, then M(R(C)) = u_s, R(u_v).
 
 batch_size = 4
 epochs = 1
@@ -60,13 +63,14 @@ for batch in loader: # Get a batch out
     # R(M(C))
     u_s1 = test[:, :, 0]
     u_v1 = test[:, :, 1:]
-    u_v1 = tf.linalg.matmul(R, u_v1)
+    u_v1 = tf.linalg.matmul(R, u_v1) # 
 
     # Rotate crystal
     e_s = e[:, 3]
     e_v = e[:, 0:3]
+    # Since the edges carry the 3D embedding of the graph, rotating them rotates the crystal
     e_v = tf.linalg.matmul(e_v, tf.transpose(R))
-    e = tf.concat([e_v, tf.expand_dims(e_s, axis = 1)], axis = 1)
+    e = tf.concat([e_v, tf.expand_dims(e_s, axis = 1)], axis = 1) # Put together again to use as input
 
     # M(R(C))
     test = model([x, a, e, i])
@@ -76,6 +80,9 @@ for batch in loader: # Get a batch out
 
 # Print to check they are equal
 for inp in range(batch_size):
-    print("Batch:")
+    print("Batch", inp, ", scalars:")
+    print(u_s1[inp])
+    print(u_s2[inp])
+    print("Batch", inp, ", vectors:")
     print(u_v1[inp])
     print(u_v2[inp])
