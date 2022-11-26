@@ -9,3 +9,4 @@ The reason why I use GVPs is because of their rotational equivariance. For more 
 - SpektralDataset_gvp.py: Downloads data and prepares it to be used by Spektral.
 - preprocessor_gvp.py: Reads a cif file of a crystal and creates the corresponding crystal graph.
 - train_gvp.py: Trains and evaluates model.
+- rot_eq_test.py: Verifies that the model is rotationally equivariant.
