@@ -3,10 +3,8 @@
 
 from base_model import base_model
 
-import numpy as np
 import tensorflow as tf
-from tensorflow.keras.losses import CategoricalCrossentropy
-from tensorflow.keras.metrics import categorical_accuracy
+from tensorflow.keras.losses import MeanSquaredError
 from tensorflow.keras.optimizers import Adam
 
 from spektral.data import DisjointLoader
@@ -14,9 +12,36 @@ from spektral.data import DisjointLoader
 ################
 # Hyperparameters
 ################
-learning_rate = 1e-3  # Learning rate
-epochs = 25  # Number of training epochs
-batch_size = 32  # Batch size
+import argparse
+
+parser = argparse.ArgumentParser(description='')
+parser.add_argument(
+    '--lr',
+    type=float,
+    default=1e-4,
+    help="Learning rate"
+)
+parser.add_argument(
+    '--epochs',
+    type=int,
+    default=25,
+    help="Number of epochs"
+)
+parser.add_argument(
+    '--batch',
+    type=int,
+    default=16,
+    help="Batch size"
+)
+args=parser.parse_args()
+
+learning_rate=args.lr
+epochs=args.epochs
+batch_size=args.batch
+
+print("Learning rate", learning_rate)
+print("Number of epochs", epochs)
+print("Batch size", batch_size)
 
 ################
 # Loading data
@@ -24,7 +49,7 @@ batch_size = 32  # Batch size
 from SpektralDataset import train_data
 from SpektralDataset import valid_data
 
-loader_tr=DisjointLoader(valid_data, batch_size=batch_size, epochs=epochs)
+loader_tr=DisjointLoader(train_data, batch_size=batch_size, epochs=epochs)
 loader_vl=DisjointLoader(valid_data, batch_size=batch_size, epochs=1)
 
 ################
@@ -37,7 +62,6 @@ loss_fn=MeanSquaredError()
 ################
 # Fit model
 ################
-@tf.function(input_signature=loader_tr.tf_signature(), experimental_relax_shapes=True)
 def train_step(inputs, target):
     with tf.GradientTape() as tape:
         predictions = model(inputs, training=True)
@@ -53,6 +77,7 @@ for batch in loader_tr:
     if step == loader_tr.steps_per_epoch:
         step = 0
         print("Loss: {}".format(loss / loader_tr.steps_per_epoch))
+        epochs+=1
         loss = 0
 
 ################
@@ -60,9 +85,25 @@ for batch in loader_tr:
 ################
 print("Testing model")
 loss = 0
-for batch in loader_vl:
+
+def T_constructor(u_s, u_v):
+    Sigma = tf.math.abs(tf.linalg.diag(u_s))
+    return tf.linalg.matmul(tf.linalg.matmul(u_v, Sigma), tf.transpose(u_v, perm=[0, 2, 1]))
+
+for i, batch in enumerate(loader_vl):
     inputs, target = batch
+
+    y_s = target[:, :, 3]
+    y_v = target[:, :, 0:3]
+    y = T_constructor(y_s, y_v)
+
     predictions = model(inputs, training=False)
-    loss += loss_fn(target, predictions)
+    u_s = predictions[:, :, 3]
+    u_v = predictions[:, :, 0:3]
+    pred = T_constructor(u_s, u_v) # no more exp
+
+    loss += loss_fn(y, pred)
+    
 loss /= loader_vl.steps_per_epoch
 print("Done. Test loss: {}".format(loss))
+print("################\n")
