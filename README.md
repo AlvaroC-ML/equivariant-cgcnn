@@ -1,4 +1,6 @@
-### This project is a work in progress. The project is written in Tensorflow and uses [Spektral](https://graphneural.network/) as a framework for graph neural networks.
+### To see the paper explaining the math behind the project, [click here](https://drive.google.com/file/d/163PP7nIyVmASueEns9KbkwJ7s--6VunG/view?usp=sharing).
+
+### For a very brief and graphical description of the project (a poster!), [click here](https://drive.google.com/file/d/1aFhOf2-nh2RjweBDDC97irVNO4ESjT8e/view?usp=sharing).
 
 # Equivariant Crystal Graph Convolutional Neural Network (CGCNN)
 
@@ -29,6 +31,6 @@ But what does it mean to rotate a rank 2 tensor? We can mathematically prove tha
 
 $$M(R(C))=RTR'$$
 
-where $R$ is the corresponding rotation matrix. We designed a GNN architecture such that, if $M(C) = T$, then $M(R(C)) = RTR'$, always. This was achieved by using [Geometric Vector Perceptrons](https://openreview.net/pdf?id=1YLJDvSx6J4). For a baseline model, we will use a slight variation of a standard Crystal Graph Convolutional Neural Network as described in [this paper](https://www.sciencedirect.com/science/article/pii/S2666389921002233) to calculate the maximum possible values of $\kappa_L$.
+where $R$ is the corresponding rotation matrix. We designed a GNN architecture such that, if $M(C) = T$, then $M(R(C)) = RTR'$, always. This was achieved by using [Geometric Vector Perceptrons](https://openreview.net/pdf?id=1YLJDvSx6J4). For a baseline model, we will use a slight variation of a standard Crystal Graph Convolutional Neural Network as described in [this paper](https://www.sciencedirect.com/science/article/pii/S2666389921002233) to calculate the maximum possible values of $\kappa_L$. Details can be found on the paper at the top.
 
 The dataset containing values of $T$ is publicly available [here](https://github.com/prashungorai/anisotropy-atlas/blob/master/cm2020-kappaL/kappaL-tensors-layered.csv). 
