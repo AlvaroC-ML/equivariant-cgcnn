@@ -1,15 +1,11 @@
 from SpektralDataset_gvp import valid_data
 from spektral.data import DisjointLoader
-from model_gvp import anisotropy
+from model import anisotropy
 
 import tensorflow as tf
 
 import numpy as np
 import random as rand
-
-##################
-# Creating rotation matrix
-##################
 
 pi = np.pi
 
@@ -41,12 +37,11 @@ R3 = tf.constant(
 
 R = np.matmul(np.matmul(R1, R2), R3)
 
-############
-# Verifying values remain unchanged
-############
-
-# The model gives two ouptuts: u_s, and u_v. u_s is rotationally invariant. u_v is rotationally equivariant. 
-# That is, we want to verify that if M(C) = u_s, u_v, then M(R(C)) = u_s, R(u_v).
+# u_s.shape = [batch, 3] 
+ # u_v.shape = [batch, 3, 3]
+def T_constructor(u_s, u_v):
+    Sigma = tf.linalg.diag(tf.math.abs(u_s))
+    return tf.linalg.matmul(tf.linalg.matmul(u_v, Sigma), tf.transpose(u_v, perm=[0, 2, 1]))
 
 batch_size = 4
 epochs = 1
@@ -54,35 +49,30 @@ epochs = 1
 model = anisotropy()
 loader=DisjointLoader(valid_data, batch_size=batch_size, epochs=epochs)
 
-for batch in loader: # Get a batch out
+for batch in loader:
     g, y = batch
     x, a, e, i = g
 
-    test = model([x, a, e, i])
+    hi = model([x, a, e, i])
 
     # R(M(C))
-    u_s1 = test[:, :, 0]
-    u_v1 = test[:, :, 1:]
-    u_v1 = tf.linalg.matmul(R, u_v1) # 
+    u_s1 = hi[:, :, 3]
+    u_v1 = hi[:, :, :3]
+    u_v1 = tf.linalg.matmul(R, u_v1)
 
     # Rotate crystal
     e_s = e[:, 3]
     e_v = e[:, 0:3]
-    # Since the edges carry the 3D embedding of the graph, rotating them rotates the crystal
     e_v = tf.linalg.matmul(e_v, tf.transpose(R))
-    e = tf.concat([e_v, tf.expand_dims(e_s, axis = 1)], axis = 1) # Put together again to use as input
+    e = tf.concat([e_v, tf.expand_dims(e_s, axis = 1)], axis = 1)
 
-    # M(R(C))
-    test = model([x, a, e, i])
-    u_s2 = test[:, :, 0]
-    u_v2 = test[:, :, 1:]
+    #M(R(C))
+    hi = model([x, a, e, i])
+    u_s2 = hi[:, :, 3]
+    u_v2 = hi[:, :, :3]
     break
 
-# Print to check they are equal
 for inp in range(batch_size):
-    print("Batch", inp, ", scalars:")
-    print(u_s1[inp])
-    print(u_s2[inp])
-    print("Batch", inp, ", vectors:")
+    print("batch")
     print(u_v1[inp])
     print(u_v2[inp])
