@@ -89,10 +89,16 @@ def T_constructor(u_s, u_v):
 
 for i, batch in enumerate(loader_vl):
     inputs, target = batch
+    
+    y_s = target[:, :, 3]
+    y_v = target[:, :, 0:3]
+    y = T_constructor(y_s, y_v)
+    
     predictions = model(inputs, training=False)
     u_s = predictions[:, :, 3]
     u_v = predictions[:, :, 0:3]
     pred = T_constructor(u_s, u_v)
+    
     loss += loss_fn(y, pred)
     
 loss /= loader_vl.steps_per_epoch
