@@ -25,34 +25,30 @@ class GVPPreprocessor(PymatgenPreprocessor):
         g.add_nodes_from(((i, {"site": site}) for i, site in enumerate(crystal.sites)))
 
         if self.radius is None:
-            # Get the expected number of sites / volume, then find a radius
-            # expected to yield 2x the desired number of neighbors
             desired_vol = (crystal.volume / crystal.num_sites) * self.num_neighbors
             radius = 2 * (desired_vol / (4 * np.pi / 3)) ** (1 / 3)
         else:
             radius = self.radius
 
         for i, neighbors in enumerate(crystal.get_all_neighbors(radius)):
-            if len(neighbors) < self.num_neighbors:
-                raise RuntimeError(f"Only {len(neighbors)} neighbors for site {i}")
-
             sorted_neighbors = sorted(neighbors, key=lambda x: x[1])[
                 : self.num_neighbors
             ]
 
-            # Changing here distance
+            visited = set()
             for _, distance, j, _ in sorted_neighbors:
-                g.add_edge(
-                    i, j, distance=np.linalg.norm(crystal.sites[j].coords - crystal.sites[i].coords)
-                )
-
+                if j not in visited:
+                    g.add_edge(
+                        i,
+                        j,
+                        distance=distance
+                    )
+                    visited.add(j)
         return g
 
     def get_edge_features(
         self, edge_data: list, max_num_edges
     ) -> Dict[str, np.ndarray]:
-
-        # changed this too
         edge_feature_matrix = np.empty((max_num_edges, 1), dtype="float32")
         edge_feature_matrix[:] = np.nan  # Initialize distances with nans
 
