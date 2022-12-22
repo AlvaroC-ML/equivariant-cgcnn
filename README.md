@@ -1,4 +1,4 @@
-### To see the paper explaining the math behind the project, [click here](https://drive.google.com/file/d/163PP7nIyVmASueEns9KbkwJ7s--6VunG/view?usp=sharing).
+### To see the paper explaining (in detail) the math behind the project, [click here](https://drive.google.com/file/d/163PP7nIyVmASueEns9KbkwJ7s--6VunG/view?usp=sharing).
 
 ### For a very brief and graphical description of the project (a poster!), [click here](https://drive.google.com/file/d/1aFhOf2-nh2RjweBDDC97irVNO4ESjT8e/view?usp=sharing).
 
