@@ -13,7 +13,7 @@ from tqdm import tqdm
 
 from preprocessor_gvp import GVPPreprocessor
 
-from tensorflow import concat, expand_dims, convert_to_tensor
+from tensorflow import concat, expand_dims, convert_to_tensor, shape
 from tensorflow.linalg import eigh
 
 ############
@@ -39,6 +39,8 @@ structure_inputs = {
 kappaL = pd.read_csv(
     "https://github.com/prashungorai/anisotropy-atlas/raw/master/cm2020-kappaL/kappaL-tensors-layered.csv"
 )
+kappaL.drop(index = [27, 28, 29, 30, 1225], inplace=True)
+kappaL.reset_index(inplace=True)
 kappaL = kappaL.sample(frac = 1) # Shuffle rows
 
 # Create tensors
@@ -50,16 +52,13 @@ T = concat(
 )
 
 # Calculate SVD decomposition
-e, v = eigh(T)
+e, v = eigh(T) # eigenvalue, eigenvector
 e = expand_dims(e, axis = -1)
-labels = concat([e, v], axis = -1)
+labels = concat([v, e], axis = -1)
 
 # Separate data
 valid_csv = kappaL.iloc[:50]
 train_csv = kappaL.iloc[50:]
-
-valid_T = T[:50, :, :]
-train_T = T[50:, :, :]
 
 class KappaLDataset(Dataset):
     def __init__(self, data_csv, data_T):
@@ -69,7 +68,7 @@ class KappaLDataset(Dataset):
 
     @staticmethod
     def inputs_to_graph(inputs, y):
-        a, e = sparse.edge_index_to_matrix( # Creates sparse matrix 
+        a, e = sparse.edge_index_to_matrix( 
             edge_index=inputs["connectivity"],
             edge_weight=np.ones(len(inputs["connectivity"])),
             edge_features=inputs["distance"],
@@ -81,11 +80,33 @@ class KappaLDataset(Dataset):
 
     def read(self):
         return [
-            self.inputs_to_graph(structure_inputs[row.icsd], self.data_T)
-            for _, row in tqdm(self.data_csv.iterrows(), total=len(self.data_csv))
+            self.inputs_to_graph(structure_inputs[row.icsd], self.data_T[i])
+            for i, row in tqdm(self.data_csv.iterrows(), total=len(self.data_csv))
             if row.icsd in structure_inputs
         ]
 
 print("Loading data!")
-train_data = KappaLDataset(train_csv, train_T)
-valid_data = KappaLDataset(valid_csv, valid_T)
+train_data = KappaLDataset(train_csv, labels)
+valid_data = KappaLDataset(valid_csv, labels)
+
+from spektral.data import DisjointLoader
+from spektral.data.utils import to_tf_signature
+from tensorflow import SparseTensorSpec, TensorSpec, as_dtype, int64
+
+# We modify the loader only to be able to use tf_signatures
+class modified_DisjointLoader(DisjointLoader):
+    def tf_signature(self):
+        signature = self.dataset.signature
+        if "y" in signature:
+            signature["y"]["shape"] = (None, 3, 4) #prepend_none(signature["y"]["shape"])
+        if "a" in signature:
+            signature["a"]["spec"] = SparseTensorSpec
+
+        signature["i"] = dict()
+        signature["i"]["spec"] = TensorSpec
+        signature["i"]["shape"] = (None,)
+        signature["i"]["dtype"] = as_dtype(int64)
+
+        signature ["e"]["shape"] = (None, 4)
+
+        return to_tf_signature(signature)
