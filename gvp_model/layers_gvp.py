@@ -1,6 +1,7 @@
 # Tensorflow layers for model
 
-from tensorflow.keras.layers import Dense, Layer
+from tensorflow.keras.layers import Dense, Layer, Concatenate
+from tensorflow.keras.activations import linear
 from tensorflow.math import sigmoid, unsorted_segment_mean
 from tensorflow.nn import relu
 from tensorflow import norm, concat, zeros, expand_dims, constant_initializer, exp, shape, gather
@@ -15,14 +16,14 @@ class GlobalUpdate(Layer):
     def __init__(self, vi):
         super().__init__()
         self.pool=GlobalAvgPool_modified()
-        self.dense=Dense(16)        
-        self.gvp1=GVPg(vi=vi+3, vo=int((vi+3)/2), so=10)
-        self.gvp2=GVPg(vi=int((vi+3)/2), vo=3, so=3)
+        self.dense=Dense(16)
+        self.gvp1=GVPg(vi=vi+1, vo=3, so=8, g_act=linear)
+        self.gvp2=GVPg(vi=3, vo=3, so=3, g_act=linear)
 
     def call(self, inputs):
         x_s, x_v, i, u_s, u_v = inputs
 
-        avg_s = self.dense(self.pool([x_s, i]))
+        avg_s = self.pool([x_s, i])
         avg_v = self.pool([x_v, i])
 
         update_s = concat(
@@ -31,9 +32,8 @@ class GlobalUpdate(Layer):
         update_v = concat(
             [avg_v, u_v], axis = -1
         )
-        output_s, output_v = self.gvp2(*self.gvp1(update_s, update_v))
-
-        return output_s, output_v
+        
+        return self.gvp2(*self.gvp1(self.dense(update_s), update_v))
 
 class GlobalAvgPool_modified(GlobalAvgPool):
     def build(self, input_shape):
@@ -44,9 +44,14 @@ class MPNN(MessagePassing):
     def __init__(self, vi, vo, embedding=256, **kwargs):
         super().__init__()
         self.embeding=embedding
-        self.m1 = GVPg(vi=2*vi + 1, vo=vi + vo, so=768)
-        self.m2 = GVPg(vi=vi + vo, vo=vo + int(vi/2), so=512)
-        self.m3 = GVPg(vi=vo + int(vi/2), vo=vo, so=256)
+
+        self.vi=1
+        self.m1 = GVPg(vi=2*vi + 1, vo=vi + vo, so=512)
+        self.m2 = GVPg(vi=vi + vo, vo=vo, so=256)
+
+        self.dense_e1=Dense(256)
+        self.dense_e2=Dense(512)
+        self.concat=Concatenate(axis=-1)
 
     def call(self, inputs, **kwargs):
         x_s, x_v, a, e_s, e_v = inputs
@@ -55,11 +60,19 @@ class MPNN(MessagePassing):
     def propagate(self, x_s, x_v, a, e_s, e_v, **kwargs):
         self.n_nodes = shape(x_s)[-2]
         self.index_targets = a.indices[:, 1]  # Nodes receiving the message
-        self.index_sources = a.indices[:, 0]  # Nodes sending the message (ie neighbors)
+        self.index_sources = a.indices[:, 0]  # Nodes sending the message
+
+        concatenate = self.concat(
+            [self.get_sources(x_s), self.get_targets(x_s), e_s]
+        )
+        e_s=self.dense_e1(self.dense_e2(concatenate))+e_s
 
         # Message
         msg_kwargs = self.get_kwargs(x_s, a, e_s, self.msg_signature, kwargs)
         messages_s, messages_v = self.message(x_s, x_v, e_s, e_v, **msg_kwargs)
+        if self.vi != 1:
+            messages_s += x_s
+            messages_v += x_v
 
         # Aggregate
         agg_kwargs = self.get_kwargs(x_s, a, e_s, self.agg_signature, kwargs)
@@ -76,14 +89,14 @@ class MPNN(MessagePassing):
             [self.get_sources(x_s), self.get_targets(x_s), e_s],
             axis = -1
         )
-        
+
         e_v = expand_dims(e_v, axis = -1)
         x_v = concat(
             [self.get_sources_v(x_v), self.get_targets_v(x_v), e_v],
             axis = -1
         )
 
-        return self.m3(*self.m2(*self.m1(x_s, x_v)))
+        return self.m2(*self.m1(x_s, x_v))
 
     def get_sources_v(self, x):
         return gather(x, self.index_sources, axis=-3)
@@ -101,7 +114,7 @@ class MPNN(MessagePassing):
 
 
 class GVPg(Layer):
-    def __init__(self, vi, vo, so, v_act = sigmoid, s_act = relu, g_act = sigmoid):
+    def __init__(self, vi, vo, so, v_act = sigmoid, s_act = linear, g_act = sigmoid):
         super().__init__()
         self.h = max(vi, vo)
         self.Wh = Dense(self.h, use_bias = False)
@@ -146,7 +159,7 @@ class RBFExpansion(Layer):
         )
     
     def call(self, inputs):
-        inputs = expand_dims(inputs, axis = -1) # Expand dimension
+        inputs = expand_dims(inputs, axis = -1)
         gaps = inputs-self.c
         
         return exp((-self.eta * gaps ** 2))
