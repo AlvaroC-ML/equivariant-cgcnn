@@ -3,7 +3,7 @@
 from tensorflow.keras import Model
 from tensorflow.math import reduce_max, unsorted_segment_mean, unsorted_segment_sum
 from spektral.layers.pooling.global_pool import GlobalAvgPool
-from layers import MPNN, GlobalUpdate, RBFExpansion
+from layers_gvp import MPNN, GlobalUpdate, RBFExpansion
 from tensorflow import zeros, ones, expand_dims, concat, constant, squeeze, shape, constant_initializer
 from tensorflow.keras.layers import Embedding, Dense
 
