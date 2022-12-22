@@ -1,4 +1,4 @@
-from model import anisotropy
+from model_gvp import anisotropy
 
 import tensorflow as tf
 from tensorflow.math import exp, abs
