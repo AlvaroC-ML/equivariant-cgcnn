@@ -1,12 +1,13 @@
 # This file creates a Spektral layer that does message passing in a crystal graph.
 
 import tensorflow as tf 
+import numpy as np
 from tensorflow.keras.layers import Dense, Layer, Concatenate
 
 from spektral.layers.convolutional.message_passing import MessagePassing
 
 class base(MessagePassing):
-    def __init__(self, embedding=256):
+    def __init__(self, embedding=256, aggregate="mean", **kwargs):
         super().__init__()
         self.embedding=embedding
         self.dense_e1=Dense(embedding)
@@ -14,23 +15,22 @@ class base(MessagePassing):
         self.dense_n1=Dense(embedding)
         self.dense_n2=Dense(embedding)
         self.dense_n3=Dense(embedding)
-        self.concat=Concatenate(axis=-2)
+        self.concat=Concatenate(axis=-1)
 
-    # To do some vertex and edge preprocessing, we need to redefine propagate. We can't do this in
-    # the call function because at that point we have not defined self.index_targets or self.index_sources.
     def propagate(self, x, a, e=None, **kwargs):
         self.n_nodes = tf.shape(x)[-2]
         self.index_targets = a.indices[:, 1]  # Nodes receiving the message
-        self.index_sources = a.indices[:, 0]  # Nodes sending the message (ie neighbors)
+        self.index_sources = a.indices[:, 0]  # Nodes sending the message
 
         concatenate = self.concat(
             [self.get_sources(x), self.get_targets(x), e]
         )
         e=self.dense_e1(self.dense_e2(concatenate))+e
+        x=self.dense_n1(x)
 
         # Message
         msg_kwargs = self.get_kwargs(x, a, e, self.msg_signature, kwargs)
-        messages = self.message(x, **msg_kwargs)
+        messages = self.message(x, e, **msg_kwargs)
 
         # Aggregate
         agg_kwargs = self.get_kwargs(x, a, e, self.agg_signature, kwargs)
@@ -40,35 +40,33 @@ class base(MessagePassing):
         upd_kwargs = self.get_kwargs(x, a, e, self.upd_signature, kwargs)
         output = self.update(embeddings, **upd_kwargs)
 
+        #return (output, e)
         return output
 
     def message(self, x, e):
-        return self.get_sources(self.dense_n1(x))*e
+        return self.get_sources(x)*e
 
     def update(self, embeddings, **kwargs):
-        return self.dense_n2(self.dense_n3(embeddings)) # + original_x
+        return self.dense_n2(self.dense_n3(embeddings))
 
-class RBFExpansion(Layer):
+class RBFExpansion(tf.keras.layers.Layer):
     def __init__(self, new_dimensions):
         super().__init__()
         self.dim = new_dimensions
         self.eta = self.add_weight(
-            shape = (1), # A single number
-            initializer = tf.constant_initializer(7.0), # Initialized to 7
+            shape = (1),
+            initializer = tf.constant_initializer(7.0),
             trainable = True
         )
-        self.c = []
-        for i in range(self.dim):
-            self.c.append(
-                self.add_weight(
-                    shape = (1, ),
-                    initializer = tf.constant_initializer(0.7*i),
-                    trainable = True
-                )
-            )
+
+        self.c = self.add_weight(
+            shape = (1, self.dim),
+            initializer = tf.constant_initializer(np.arange(0.0, 7.0, 7/self.dim)),
+            trainable = True
+        )
     
-    def call(self, inputs): # how can we parametrize this?
-        inputs = tf.expand_dims(inputs, axis = -1) # Expand dimension
-        inputs = tf.concat([inputs - self.c[i] for i in range(self.dim)], axis = -1)
+    def call(self, inputs):
+        inputs = tf.expand_dims(inputs, axis = -1)
+        gaps = inputs-self.c
         
-        return tf.exp((-self.eta * inputs))
+        return tf.exp((-self.eta * gaps ** 2))
