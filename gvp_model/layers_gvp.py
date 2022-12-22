@@ -1,3 +1,5 @@
+# Tensorflow layers for model
+
 from tensorflow.keras.layers import Dense, Layer
 from tensorflow.math import sigmoid, unsorted_segment_mean
 from tensorflow.nn import relu
@@ -69,9 +71,6 @@ class MPNN(MessagePassing):
 
         return output_s, output_v
 
-    # x_s.shape = [n_nodes, 256]
-    # x_v.shape = [n_nodes, 3, 12]
-    # e.shape = [n_edges, 10]
     def message(self, x_s, x_v, e_s, e_v):
         x_s = concat(
             [self.get_sources(x_s), self.get_targets(x_s), e_s],
@@ -135,8 +134,8 @@ class RBFExpansion(Layer):
         super().__init__()
         self.dim = new_dimensions
         self.eta = self.add_weight(
-            shape = (1), # A single number
-            initializer = constant_initializer(7.0), # Initialized to 7
+            shape = (1),
+            initializer = constant_initializer(7.0),
             trainable = True
         )
 
