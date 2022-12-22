@@ -20,7 +20,7 @@ from tensorflow.linalg import eigh
 # Saving graphs
 ############
 
-input_path = "/projects/rlmolecule/jlaw/projects/thermal-conductivity/icsd_kappaL_structures.json"
+input_path = "/PATH/TO/DATASET/"
 
 structures = {}
 with open(input_path) as f:
@@ -30,7 +30,7 @@ with open(input_path) as f:
 preprocessor = GVPPreprocessor()
 structure_inputs = {
     key: preprocessor(structure) for key, structure in tqdm(structures.items())
-} # Check what preprocessor returns
+}
 
 ############
 # Saving labels
@@ -68,11 +68,11 @@ class KappaLDataset(Dataset):
         super().__init__()
 
     @staticmethod
-    def inputs_to_graph(inputs, y): # inputs is a dictionary?
+    def inputs_to_graph(inputs, y):
         a, e = sparse.edge_index_to_matrix( # Creates sparse matrix 
             edge_index=inputs["connectivity"],
             edge_weight=np.ones(len(inputs["connectivity"])),
-            edge_features=inputs["distance"], # This is what we're changing.
+            edge_features=inputs["distance"],
         )
         assert a.getnnz() == e.shape[0], "checking for multigraph"
 
@@ -81,11 +81,10 @@ class KappaLDataset(Dataset):
 
     def read(self):
         return [
-            self.inputs_to_graph(structure_inputs[row.icsd], self.data_T) # the first param is inputs
+            self.inputs_to_graph(structure_inputs[row.icsd], self.data_T)
             for _, row in tqdm(self.data_csv.iterrows(), total=len(self.data_csv))
             if row.icsd in structure_inputs
-        ] # for a dataframe df, df.iterrows() retuns a row id 
-          # and all the values of each column
+        ]
 
 print("Loading data!")
 train_data = KappaLDataset(train_csv, train_T)
