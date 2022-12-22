@@ -33,9 +33,6 @@ class GVPPreprocessor(PymatgenPreprocessor):
             radius = self.radius
 
         for i, neighbors in enumerate(crystal.get_all_neighbors(radius)):
-            # if len(neighbors) < self.num_neighbors:
-            #     raise RuntimeError(f"Only {len(neighbors)} neighbors for site {i}")
-
             sorted_neighbors = sorted(neighbors, key=lambda x: x[1])[
                 : self.num_neighbors
             ]
